@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>URL Shortener + Analytics</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            text-align: center;
+        }
+
+        .container {
+            width: 60%;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            margin-top: 50px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 70%;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+        }
+
+        a {
+            color: green;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>URL Shortener + Analytics</h1>
+
+    <form id="urlForm">
+        <input type="text" id="longUrl" placeholder="Enter your long URL here" required>
+        <button type="submit">Shorten</button>
+    </form>
+
+    <div class="result" id="result"></div>
+
+    <div class="analytics">
+        <h3>Analytics</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Original URL</th>
+                    <th>Short URL</th>
+                    <th>Clicks</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let urlData = JSON.parse(localStorage.getItem("urls")) || [];
+
+    function generateShortCode() {
+        return Math.random().toString(36).substring(2, 8);
+    }
+
+    document.getElementById("urlForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        let longUrl = document.getElementById("longUrl").value;
+        let code = generateShortCode();
+
+        let newEntry = {
+            longUrl,
+            shortUrl: "short.ly/" + code,
+            clicks: 0
+        };
+
+        urlData.push(newEntry);
+        localStorage.setItem("urls", JSON.stringify(urlData));
+
+        displayResult(newEntry);
+        displayTable();
+    });
+
+    function displayResult(entry) {
+        let resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = `
+            <p>Short URL:</p>
+            <a onclick="redirect('${entry.shortUrl}')">${entry.shortUrl}</a>
+            <br><br>
+            <button onclick="copyUrl('${entry.shortUrl}')">Copy</button>
+        `;
+    }
+
+    function displayTable() {
+        let tableBody = document.getElementById("tableBody");
+        tableBody.innerHTML = "";
+
+        urlData.forEach((entry, index) => {
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${entry.longUrl}</td>
+                    <td><a onclick="redirect('${entry.shortUrl}')">${entry.shortUrl}</a></td>
+                    <td>${entry.clicks}</td>
+                </tr>
+            `;
+        });
+    }
+
+    function redirect(shortUrl) {
+        let entry = urlData.find(e => e.shortUrl === shortUrl);
+        if (entry) {
+            entry.clicks++;
+            localStorage.setItem("urls", JSON.stringify(urlData));
+            displayTable();
+            window.open(entry.longUrl, "_blank");
+        }
+    }
+
+    function copyUrl(url) {
+        navigator.clipboard.writeText(url);
+        alert("Copied!");
+    }
+
+    displayTable();
+</script>
+
+</body>
+</html>
